@@ -43,6 +43,11 @@ private:
 	sf::Sprite backgroundSprite1;
 	sf::Sprite backgroundSprite2;
 
+	//audio
+	sf::SoundBuffer asteroidClickBuffer;
+	sf::Sound asteroidClickSound;
+
+	// ... other private members ...
 	// Game Logic
 	bool endgame;
 	unsigned points;

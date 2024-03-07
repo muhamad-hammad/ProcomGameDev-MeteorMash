@@ -93,6 +93,7 @@ Game::Game()
 	this->inittext();
 	this->initEnemies();
 	this->initBackground();
+	this->initAudio();
 }
 Game::~Game()
 {
@@ -211,26 +212,8 @@ void Game::UpdateEnemies()
 			{
 				if (this->enemies[i].getGlobalBounds().contains(this->mousePosView))
 				{
-					if (this->enemies[i].getFillColor() == sf::Color::Magenta)
-					{
-						this->points += 10;
-					}
-					else if (this->enemies[i].getFillColor() == sf::Color::Red)
-					{
-						this->points += 7;
-					}
-					else if (this->enemies[i].getFillColor() == sf::Color::Yellow)
-					{
-						this->points += 5;
-					}
-					else if (this->enemies[i].getFillColor() == sf::Color::Blue)
-					{
-						this->points += 3;
-					}
-					else if (this->enemies[i].getFillColor() == sf::Color::Green)
-					{
-						this->points += 1;
-					}
+					asteroidClickSound.play();
+					
 					// If enemy was clicked, remove it and increase points
 					hit = true;
 					this->enemies.erase(this->enemies.begin() + i);
@@ -283,6 +266,15 @@ void Game::renderText(sf::RenderTarget& target)
 {
 	target.draw(this->uiText);
 }
+void Game::initAudio()
+{
+
+	if (!asteroidClickBuffer.loadFromFile("asaudio.mp3"))
+	{
+		std::cout << "ERROR: Loading sound" << std::endl;
+	}
+	asteroidClickSound.setBuffer(asteroidClickBuffer);
+}
 void Game::RenderEnemies(sf::RenderTarget& target)
 {
 	for (auto& e : this->enemies)
@@ -307,4 +299,3 @@ void Game::Render()
 	}
 	this->window->display();
 }
-//the cod
