@@ -6,8 +6,8 @@ void Game::initVariables()
 	this->window = nullptr;
 
 	this->points = 0;
-	this->health = 25;
-	this->enemySpawnTimerMax = 50.f;
+	this->health = 50;
+	this->enemySpawnTimerMax = 75.f;
 	this->enemySpawnTimer = this->enemySpawnTimerMax;
 	this->maxEnemies = 10;
 	this->MouseHold = false;
@@ -17,7 +17,7 @@ void Game::initWindow()
 {
 	this->videomode.height = 600;
 	this->videomode.width = 800;
-	this->window = new sf::RenderWindow(sf::VideoMode(800, 600), "Game1", sf::Style::Titlebar | sf::Style::Close);
+	this->window = new sf::RenderWindow(sf::VideoMode(1400,800), "Game1", sf::Style::Titlebar | sf::Style::Close);
 
 	this->window->setFramerateLimit(144);
 
@@ -35,8 +35,8 @@ void Game::initFonts()
 void Game::inittext()
 {
 	this->uiText.setFont(this->font);
-	this->uiText.setCharacterSize(12);
-	this->uiText.setFillColor(sf::Color::White);
+	this->uiText.setCharacterSize(18);
+	this->uiText.setFillColor(sf::Color::Red);
 	this->uiText.setString("NONE");
 
 	this->gameOverText.setFont(this->font);
@@ -48,18 +48,26 @@ void Game::inittext()
 	this->tryagainText.setFont(this->font);
 	this->tryagainText.setCharacterSize(24);
 	this->tryagainText.setFillColor(sf::Color::Red);
-	this->tryagainText.setString("Press R to try again!");
+	this->tryagainText.setString("Try again!");
 	this->tryagainText.setPosition(800 / 2.f, 600 / 2.f + 30.f);
 }
 void Game::initEnemies()
 {
 	this->enemies.clear();
+	if (!this->asteroidTexture.loadFromFile("asteroid01.png"))
+	{
+		std::cout << "ERROR: Could not load asteroid texture" << std::endl;
+	}
+	else
+	{
+		this->enemy.setTexture(&this->asteroidTexture); // Set the texture only if it's loaded successfully
+	}
 	this->enemy.setPosition(10.0f, 10.0f);
-	this->enemy.setSize(sf::Vector2f(100.f, 100.f));
-	this->enemy.setScale(sf::Vector2f(0.5f, 0.5f)); // reduces the size of enemy by half (initial value of scale is 1) so it becomes 0.5*1
-	this->enemy.setFillColor(sf::Color::Cyan);
-	this->enemy.setOutlineColor(sf::Color::Cyan);
+	this->enemy.setSize(sf::Vector2f(50.f, 50.f));
+	this->enemy.setScale(sf::Vector2f(0.5f, 0.5f));// reduces the size of enemy by half (initial value of scale is 1) so it becomes 0.5*1
+	this->enemy.setTexture(&this->asteroidTexture); // Use the asteroid texture
 	this->enemy.setOutlineThickness(1.f);
+	this->enemy.setOutlineColor(sf::Color::Black);
 }
 void Game::initBackground()
 {
@@ -67,13 +75,11 @@ void Game::initBackground()
 	{
 		std::cout << "ERROR loading background" << std::endl;
 	}
-
 	// Initialize the first background sprite
 	backgroundSprite1.setTexture(backgroundTexture);
 	backgroundSprite1.setScale(
 		float(window->getSize().x) / backgroundTexture.getSize().x,
 		float(window->getSize().y) / backgroundTexture.getSize().y);
-
 	// Initialize the second background sprite, positioned above the first
 	backgroundSprite2.setTexture(backgroundTexture);
 	backgroundSprite2.setScale(backgroundSprite1.getScale());
@@ -92,52 +98,47 @@ Game::~Game()
 {
 	delete this->window;
 }
-
 const bool Game::running() const
 {
 	return this->window->isOpen();
 }
-
 const bool Game::getEndgame() const
 {
 	return this->endgame;
 }
-
 void Game::spawnEnemy()
 {
+	this->enemy.setTexture(&this->asteroidTexture);
 	this->enemy.setPosition(
 		static_cast<float>(rand() % static_cast<int>(this->window->getSize().x - this->enemy.getSize().x)),
 		0.f
 	);
 	int type = rand() % 5;
-
+	float scale;
 	switch (type)
 	{
 	case 0:
-		this->enemy.setSize(sf::Vector2f(10.f, 10.f));
-		this->enemy.setFillColor(sf::Color::Magenta); // hardest
+		scale = 0.2f;
 		break;
 	case 1:
-		this->enemy.setSize(sf::Vector2f(30.f, 30.f));
-		this->enemy.setFillColor(sf::Color::Red);
+		scale = 0.4f;
 		break;
 	case 2:
-		this->enemy.setSize(sf::Vector2f(50.f, 50.f));
-		this->enemy.setFillColor(sf::Color::Yellow);
+		scale = 0.6f;
 		break;
 	case 3:
-		this->enemy.setSize(sf::Vector2f(70.f, 70.f));
-		this->enemy.setFillColor(sf::Color::Blue);
+		scale = 0.8f;
 		break;
 	case 4:
-		this->enemy.setSize(sf::Vector2f(90.f, 90.f));
-		this->enemy.setFillColor(sf::Color::Green);
+		scale = 1.0f;
 		break;
-
 	default:
+		scale = 1.2f;
 		break;
 	}
-	//spawn the enemy
+	float baseSizeX = 272; // Assuming your asteroid.png has a base size of 100x100
+	float baseSizeY = 184;
+	this->enemy.setSize(sf::Vector2f(baseSizeX * scale, baseSizeY * scale));
 	this->enemies.push_back(this->enemy);
 }
 void Game::PollEvents()
@@ -152,11 +153,9 @@ void Game::PollEvents()
 		case sf::Event::KeyPressed:
 			if (this->ev.key.code == sf::Keyboard::R && this->endgame)
 			{
-				// Reset game state
 				this->initVariables();
 				this->inittext();
 				this->initEnemies();
-				// ... reset any other necessary states ...
 			}
 			break;
 		}
@@ -164,11 +163,6 @@ void Game::PollEvents()
 }
 void Game::UpdateMousePos()
 {
-	/*
-	* returns void
-				 updates the mouse positions:
-				 mouse position relative to window(vector2i)
-	*/
 	this->mousePosWindow = sf::Mouse::getPosition(*this->window);
 	this->mousePosView = this->window->mapPixelToCoords(this->mousePosWindow);
 }
@@ -196,7 +190,6 @@ void Game::UpdateEnemies()
 	for (int i = 0; i < this->enemies.size(); i++)
 	{
 		this->enemies[i].move(0.f, 3.f);
-
 		// If the enemy goes off-screen, remove it and decrease health
 		if (this->enemies[i].getPosition().y > this->window->getSize().y)
 		{
@@ -205,7 +198,6 @@ void Game::UpdateEnemies()
 			break; // Break out of the loop to avoid vector index issues after erase
 		}
 	}
-
 	// Check if the left mouse button was pressed and released (click)
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 	{
@@ -243,9 +235,7 @@ void Game::UpdateEnemies()
 					hit = true;
 					this->enemies.erase(this->enemies.begin() + i);
 				}
-			}
-
-			// If no enemy was clicked and it is a new click, decrease health by 1
+			}// If no enemy was clicked and it is a new click, decrease health by 1
 			if (!hit)
 			{
 				this->health -= 1;
@@ -266,32 +256,25 @@ void Game::Update()
 	if (this->health <= 0)
 	{
 		this->endgame = true;
-	}
-	// Always update the mouse position and the text to reflect the current score and health
-
+	}// Always update the mouse position and the text to reflect the current score and health
 	if (!this->endgame)
-	{
-		// Move both background sprites down
+	{ // Move both background sprites down
 		backgroundSprite1.move(0, backgroundVelocity);
 		backgroundSprite2.move(0, backgroundVelocity);
-
 		// Check if the first background sprite has moved completely off the bottom of the screen
 		if (backgroundSprite1.getPosition().y >= window->getSize().y)
 		{
 			backgroundSprite1.setPosition(0, -static_cast<float>(window->getSize().y));
 		}
-
 		// Check if the second background sprite has moved completely off the bottom of the screen
 		if (backgroundSprite2.getPosition().y >= window->getSize().y)
 		{
 			backgroundSprite2.setPosition(0, -static_cast<float>(window->getSize().y));
 		}
-
 		this->UpdateEnemies();
 	}
 	else
-	{
-		// Game over conditions
+	{// Game over conditions
 		this->gameOverText.setPosition(sf::Vector2f(800 / 2.0f - this->gameOverText.getGlobalBounds().width / 2.0f, 600 / 2.0f - this->gameOverText.getGlobalBounds().height));
 		this->tryagainText.setPosition(sf::Vector2f(800 / 2.0f - this->tryagainText.getGlobalBounds().width / 2.0f, 600 / 2.0f + 30.f));
 	}
@@ -310,21 +293,18 @@ void Game::RenderEnemies(sf::RenderTarget& target)
 void Game::Render()
 {
 	this->window->clear();
-	// Draw both background sprites
 	this->window->draw(backgroundSprite1);
 	this->window->draw(backgroundSprite2);
-
-	// Draw game objects
 	if (!this->endgame)
 	{
 		this->renderText(*this->window);
 		this->RenderEnemies(*this->window);
 	}
 	else
-	{
-		// Draw game over and try again texts
+	{// Draw game over and try again texts
 		this->window->draw(this->gameOverText);
 		this->window->draw(this->tryagainText);
 	}
 	this->window->display();
 }
+//the cod

@@ -15,7 +15,13 @@ class Game
 private:
 	//private variables
 	// window
+
+	// Existing member variables...
+	sf::Texture asteroidTexture;
+	std::vector<sf::Sprite> asteroids;
+
 	sf::RenderWindow *window;
+
 	sf::Event ev;
 	sf::VideoMode videomode;
 	sf::Texture backgroundTexture;
@@ -57,6 +63,7 @@ private:
 	void inittext();
 	void initEnemies();
 	void initBackground();
+	void initAudio();
 public: 
 	// constructors and destructors
 	Game();
